@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: macos-10.15
+
+    steps:
+      - name: Update packages
+        run: |
+          brew cask uninstall vagrant
+          brew cask install https://raw.githubusercontent.com/Homebrew/homebrew-cask/7f340b97d60907da225e9f5c10e81f9285ef2edb/Casks/vagrant.rb
+          brew cask uninstall virtualbox
+          brew cask install https://raw.githubusercontent.com/danielmenezesbr/homebrew-cask/virtualbox-6024/Casks/virtualbox.rb
+          
+      - name: Show packages version
+        run: | 
+          VBoxManage --version
+          vagrant up --version
+      - uses: actions/checkout@v2
+
+      - name: Cache multiple paths
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/.vagrant.d/boxes/cdaf-VAGRANTSLASH-WindowsServerDC
+          key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+          
+          
+      - name: vagrant
+        run: |
+            vagrant plugin install vagrant-vbguest
+            vagrant up dc
+            vagrant powershell dc -c 'systeminfo'
